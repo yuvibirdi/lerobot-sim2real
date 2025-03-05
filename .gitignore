@@ -1,0 +1,9 @@
+# python related
+__pycache__/
+*.egg-info/
+
+
+# other
+lerobot/
+videos/
+.vscode/
