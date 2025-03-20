@@ -19,4 +19,12 @@ git clone https://github.com/huggingface/lerobot.git
 cd lerobot && pip install -e . ## submodule lerobot?
 ```
 
+For a quick test run
+
+```bash
+python lerobot_sim2real/scripts/random_actions.py
+```
+
+It will take random actions and save a video of the real environment
+
 ## Supporting other Robots
