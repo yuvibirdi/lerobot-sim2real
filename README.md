@@ -27,4 +27,12 @@ python lerobot_sim2real/scripts/random_actions.py
 
 It will take random actions and save a video of the real environment
 
+## Evaluation
+
+
+```bash
+python lerobot_sim2real/scripts/eval_agent.py --checkpoint <path_to_checkpoint>
+# if no checkpoint is provided, it will use a random agent
+```
+
 ## Supporting other Robots

@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="mani_skill",
+    name="lerobot_sim2real",
     version="0.0.1",
     description="Sim2Real with LeRobot",
     url="https://github.com/StoneT2000/lerobot-sim2real",

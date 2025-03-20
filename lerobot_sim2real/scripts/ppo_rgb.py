@@ -23,7 +23,7 @@ from mani_skill.utils.wrappers.record import RecordEpisode
 from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv
 
 # rl related imports
-from lerobot_sim2real.rl.agents.actor_critic import ActorCritic, ActorCriticConfig
+from lerobot_sim2real.rl.agents.actor_critic import ActorCritic
 from lerobot_sim2real.rl.buffer.dict_array import DictArray
 from lerobot_sim2real.models.vision import NatureCNN
 
@@ -235,7 +235,8 @@ if __name__ == "__main__":
     print(f"args.num_iterations={args.num_iterations} args.num_envs={args.num_envs} args.num_eval_envs={args.num_eval_envs}")
     print(f"args.minibatch_size={args.minibatch_size} args.batch_size={args.batch_size} args.update_epochs={args.update_epochs}")
     print(f"####")
-    agent = ActorCritic(envs, feature_net=NatureCNN(next_obs), config=ActorCriticConfig(actor_features=512, critic_features=512)).to(device)
+    agent = ActorCritic(envs, feature_net=NatureCNN(next_obs)).to(device)
+    print("Agent", agent)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     if args.checkpoint:

@@ -17,7 +17,7 @@ class ActorCriticConfig:
     critic_features: int = 512
 
 class ActorCritic(nn.Module):
-    def __init__(self, envs, sample_obs, feature_net: nn.Module, config: ActorCriticConfig):
+    def __init__(self, envs, sample_obs, feature_net: nn.Module, config: ActorCriticConfig = ActorCriticConfig()):
         super().__init__()
         self.feature_net = feature_net
         with torch.no_grad():
