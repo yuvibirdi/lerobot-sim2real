@@ -2,6 +2,9 @@
 __pycache__/
 *.egg-info/
 
+# lerobot
+lerobot/
+calibration/
 
 # other
 lerobot/
