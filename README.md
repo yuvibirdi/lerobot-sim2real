@@ -16,7 +16,7 @@ Then we install lerobot which enable ease of use with all kinds of hardware.
 
 ```bash
 git clone https://github.com/huggingface/lerobot.git
-cd lerobot && pip install -e . ## submodule lerobot?
+cd lerobot && pip install -e ".[dynamixel]" ## submodule lerobot?
 ```
 
 For a quick test run
