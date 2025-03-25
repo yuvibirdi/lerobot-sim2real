@@ -5,6 +5,7 @@ from typing import Optional
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
+import sapien
 import torch
 import tyro
 from lerobot.common.robot_devices.cameras.configs import OpenCVCameraConfig
@@ -13,15 +14,17 @@ from lerobot.common.robot_devices.robots.configs import KochRobotConfig
 from lerobot.common.robot_devices.robots.manipulator import ManipulatorRobot
 from mani_skill.agents.robots.lerobot.manipulator import LeRobotRealAgent
 from mani_skill.envs.sim2real_env import Sim2RealEnv
-from mani_skill.utils import common, sapien_utils
-from mani_skill.utils.structs.pose import Pose
+from mani_skill.utils import sapien_utils
+from mani_skill.utils.registration import REGISTERED_ENVS, register_env
 from mani_skill.utils.visualization.misc import tile_images
 from mani_skill.utils.wrappers.flatten import FlattenRGBDObservationWrapper
 from mani_skill.utils.wrappers.record import RecordEpisode
+from transforms3d.euler import euler2quat
 
 
 @dataclass
 class Args:
+    env_id: str = "KochGraspCube-v1"
     output_photo_path: Optional[str] = None
     """path to save photo from real_env"""
 
@@ -126,6 +129,48 @@ def update_camera(sim_env):
 if __name__ == "__main__":
     args = args = tyro.cli(Args)
 
+    # create duplicate environment with alignment dots
+    @register_env("AlignmentEnv-v1")
+    class Alignment_Env(REGISTERED_ENVS[args.env_id].cls):
+        def _load_scene(self, options: dict):
+            super()._load_scene(options)
+            # overlay table dots for camera alignment
+            def make_alignment_dot(name, color, init_pose):
+                builder = self.scene.create_actor_builder()
+                builder.add_cylinder_visual(
+                    radius=0.005,
+                    half_length=1e-4,
+                    material=sapien.render.RenderMaterial(base_color=color),
+                )
+                builder.initial_pose = init_pose
+                return builder.build_kinematic(name=name)
+
+            alignment_dot_pos = [
+                [0.2, 0.1, 0],  ## close to camera
+                [0.2, -0.1, 0],  ## far from camera
+                [0.35, 0, 0],  ## far infront of robot
+                [0.35, 0.1, 0],  ## far infront of robot and close camera
+            ]
+
+            self.alignment_dots = []
+            for i, pos in enumerate(alignment_dot_pos):
+                dot = make_alignment_dot(
+                    f"position{i}",
+                    np.array([1, 1, 0, 1]),
+                    sapien.Pose(p=pos, q=euler2quat(0, np.pi / 2, 0)),
+                )
+                self.alignment_dots.append(dot)
+            cam_target_dot = make_alignment_dot(
+                f"cam_target_dot",
+                np.array([0, 1, 0, 1]),
+                sapien.Pose(
+                    p=self.base_camera_settings["target"], q=euler2quat(0, np.pi / 2, 0)
+                ),
+            )
+            self.alignment_dots.append(cam_target_dot)
+
+    # create robot from config
+    # TODO: (xhin stao): make a separate config file to share among all scripts?
     robot_config = KochRobotConfig(
         leader_arms={},
         follower_arms={
@@ -159,7 +204,7 @@ if __name__ == "__main__":
 
     max_episode_steps = 200
     sim_env = gym.make(
-        "KochGraspCube-v1",
+        "AlignmentEnv-v1",
         obs_mode="rgb+segmentation",
         sim_config={"sim_freq": 120, "control_freq": 15},
         render_mode="sensors",  # only sensors mode is supported right now for real envs, basically rendering the direct visual observations fed to policy
