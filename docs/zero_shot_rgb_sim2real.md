@@ -84,7 +84,7 @@ python lerobot_sim2real/scripts/camera_alignment.py --env-id="SO100GraspCube-v1"
 
 Now we get to train the robot we setup in the real world in simulation via RL. We provide a baseline training script for visual Proximal Policy Optimization (PPO), which accepts environment id and the env configuration json file so that we can train on an environment aligned with the real world.
 
-For the SO100GraspCube-v1 environment we have the following already tuned script
+For the SO100GraspCube-v1 environment we have the following already tuned script (uses about 8-10GB of GPU memory)
 
 ```bash
 seed=42
@@ -112,10 +112,3 @@ python lerobot_sim2real/scripts/eval_ppo_rgb.py --env_id="SO100GraspCube-v1" --e
 ```
 
 For safety reasons we recommend you run the script above with --no-continuous_eval first, which forces the robot to wait for you to press enter into the command line before it takes each action. Sometimes RL can learn very strange behaviors and in the real world this can lead to dangerous movements or the robot breaking. If you are okay with more risk and/or have checked that the robot is probably going to take normal actions you can remove the argument to allow the RL agent to run freely.
-
-```
-python -m lerobot.calibrate \
-    --robot.type=so100_follower \
-    --robot.port=/dev/ttyACM0 \
-    --robot.id=stone_home
-```
