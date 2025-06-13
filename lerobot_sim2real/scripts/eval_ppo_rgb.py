@@ -84,8 +84,7 @@ def main(args: Args):
         domain_randomization=False,
         reward_mode="none"
     )
-    if args.control_freq is not None:
-        env_kwargs["sim_config"] = {"control_freq": args.control_freq}
+
     if args.env_kwargs_json_path is not None:
         with open(args.env_kwargs_json_path, "r") as f:
             env_kwargs.update(json.load(f))
@@ -102,7 +101,7 @@ def main(args: Args):
     
     # The Sim2RealEnv class uses the sim_env to help make various checks for sim2real alignment (e.g. observation space is the same, cameras are the similar)
     # and will always try its best to apply all wrappers you used on the sim env to the real env as well.
-    real_env = Sim2RealEnv(sim_env=sim_env, agent=real_agent)
+    real_env = Sim2RealEnv(sim_env=sim_env, agent=real_agent, control_freq=args.control_freq)
     # sim_env.print_sim_details()
     sim_obs, _ = sim_env.reset()
     real_obs, _ = real_env.reset()
