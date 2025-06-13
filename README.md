@@ -4,6 +4,8 @@ LeRobot Sim2real provides code to train with Reinforcement Learning in fast GPU 
 
 https://github.com/user-attachments/assets/ca20d10e-d722-48fe-94af-f57e0b2b2fcd
 
+Note that this project is still in a very early stage. There are many ways the sim2real can be improved (like more system ID tools, better reward functions etc.), but we plan to keep this repo extremely simple for readability and hackability.
+
 If you find this project useful, give this repo and [ManiSkill](https://github.com/haosulab/ManiSkill) a star! If you are using [SO100](https://github.com/TheRobotStudio/SO-ARM100/)/[LeRobot](https://github.com/huggingface/lerobot), make sure to also give them a star. If you use ManiSkill / this sim2real codebase in your research, please cite our [research paper](https://arxiv.org/abs/2410.00425):
 
 ```
@@ -23,6 +25,14 @@ conda create -n ms3-lerobot "python==3.11" # 3.11 is recommended
 git clone https://github.com/StoneT2000/lerobot-sim2real.git
 pip install -e .
 pip install torch # install the version of torch that works for you
+```
+
+The ManiSkill/SAPIEN simulator code is dependent on working NVIDIA drivers and vulkan packages. After running pip install above, if something is wrong with drivers/vulkan, please follow the troubleshooting guide here: https://maniskill.readthedocs.io/en/latest/user_guide/getting_started/installation.html#troubleshooting
+
+To double check if the simulator is installed correctly, you can run 
+
+```
+python -m mani_skill.examples.demo_random_action
 ```
 
 Then we install lerobot which enable ease of use with all kinds of hardware.
