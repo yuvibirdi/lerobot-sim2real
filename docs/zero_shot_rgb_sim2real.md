@@ -35,7 +35,9 @@ To make modifications you can just edit the "base_camera_settings"."pos" value i
 python lerobot_sim2real/scripts/record_reset_distribution.py --env-id="SO100GraspCube-v1" --env-kwargs-json-path=env_config.json
 ```
 
-You can also modify where the camera is pointing at in case it can't see the robot or enough of the workspace in simulation. Simply modify "base_camera_settings"."target" value accordingly, which is the 3D point the camera points at. Finally you can also modify the mean position cubes are spawned at as well as how large of an area they are randomized in in the config file.
+TODO Show video of a reasonable reset distribution
+
+You can also modify where the camera is pointing at in case it can't see the robot or enough of the workspace in simulation. Simply modify "base_camera_settings"."target" value accordingly, which is the 3D point the camera points at. Finally you can also modify the mean position cubes are spawned at as well as how large of a square area they are randomized in in the config file.
 
 The default options for the sim settings are tested and should work so you can also skip modifying the simulation environment and go straight to setting up the real camera.
 
