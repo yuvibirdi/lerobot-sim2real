@@ -47,3 +47,5 @@ Note that depending on what hardware you are using you might need to install add
 ## Sim2Real Tutorial
 
 We currently provide a tutorial on how to train a RGB based model controlling an SO100/SO101 robot arm in simulation and deploying that zero-shot in the real world to grasp cubes. Follow the tutorial [here](./docs/zero_shot_rgb_sim2real.md)
+
+We are also working on a tutorial showing you how to make your own environments ready for sim2real, stay tuned!
