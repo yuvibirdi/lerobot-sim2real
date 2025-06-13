@@ -4,9 +4,15 @@ __pycache__/
 
 # lerobot
 lerobot/
+.cache/
 calibration/
 
 # other
 lerobot/
 videos/
 .vscode/
+.DS_Store
+
+
+wandb/
+runs/
