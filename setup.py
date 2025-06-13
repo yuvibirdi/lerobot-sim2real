@@ -10,7 +10,6 @@ setup(
     setup_requires=["setuptools>=62.3.0"],
     install_requires=[
         "mani_skill_nightly",
-        "torch==2.5.1", # 2.5.1 torch version is most stable and does not have CPU memory leak issues https://github.com/arth-shukla/mshab/issues/31
         "tensorboard",
         "wandb"
     ]

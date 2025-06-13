@@ -1,6 +1,6 @@
 # Step-by-step Guide for Zero-Shot RGB Sim2Real Manipulation with LeRobot
 
-Welcome to our tutorial on how to train a robot manipulation policy in simulation with Reinforcement Learning and deploy it zero-shot in the real world! This tutorial will take you through each step of a relatively simple approach for sim2real that does not rely on state estimation to perform sim2real, just RGB images. We will be using the SO100 / SO101 robot for this and [ManiSkill](https://github.com/haosulab/ManiSkill) for fast simulation and rendering. You will also need a camera and access to some NVIDIA GPU compute for fast training (Google Colab works but might be a bit slow). This tutorial is simple and can be improved in many ways from better RL tuning and better reward functions, we welcome you to hack around with this repo!
+Welcome to our tutorial on how to train a robot manipulation policy in simulation with Reinforcement Learning and deploy it zero-shot in the real world! This tutorial will take you through each step of a relatively simple approach for sim2real that does not rely on state estimation to perform sim2real, just RGB images. We will be using the SO100 / SO101 robot for this and [ManiSkill](https://github.com/haosulab/ManiSkill) for fast simulation and rendering. You will also need a camera and access to some NVIDIA GPU compute (with at least 8GB of GPU memory) for fast training (Google Colab works but might be a bit slow). This tutorial is simple and can be improved in many ways from better RL tuning and better reward functions, we welcome you to hack around with this repo!
 
 If you find this project useful, give this repo and [ManiSkill](https://github.com/haosulab/ManiSkill) a star! If you are using [SO100](https://github.com/TheRobotStudio/SO-ARM100/)/[LeRobot](https://github.com/huggingface/lerobot), make sure to also give them a star. If you use ManiSkill / this sim2real codebase in your research, please cite our [research paper](https://arxiv.org/abs/2410.00425):
 
@@ -59,9 +59,8 @@ Next you can run the next script which will help you align the camera a bit. It 
 python lerobot_sim2real/scripts/camera_alignment.py --env-id="SO100GraspCube-v1" --env-kwargs-json-path=env_config.json
 ```
 
+![](./assets/camera_alignment_step_1.png)
 
-
-TODO: Image of the alignment
 
 ## 1.3: Get an image for greenscreening to bridge the sim2real visual gap 
 
@@ -97,18 +96,37 @@ python lerobot_sim2real/scripts/train_ppo_rgb.py --env-id="SO100GraspCube-v1" --
   --ppo.track --ppo.wandb_project_name "SO100-ManiSkill"
 ```
 
-This will train an agent via RL/PPO and track its training progress on Weights and Biases and Tensorboard. Run `tensorboard --logdir runs/` to see the local tracking. Checkpoints are saved to "runs/ppo-SO100GraspCube-v1-rgb-${seed}/ckpt_x.pt" and evaluation videos in simulation are saved to "runs/ppo-SO100GraspCube-v1-rgb-${seed}/videos"
+This will train an agent via RL/PPO and track its training progress on Weights and Biases and Tensorboard. Run `tensorboard --logdir runs/` to see the local tracking. Checkpoints are saved to "runs/ppo-SO100GraspCube-v1-rgb-${seed}/ckpt_x.pt" and evaluation videos in simulation are saved to `"runs/ppo-SO100GraspCube-v1-rgb-${seed}/videos"`
+
+For this environment the evaluation result curves may look approximately like this.
+
+![](./assets/eval_return_success_curves.png)
 
 For the SO100GraspCube-v1 task you don't need 100_000_000 timesteps of training for successful deployment. We find that around 25 to 40 million are enough, which take about an hour of training on a 4090 GPU. Over training can sometimes lead to worse policies! Generally make sure first your policy reaches a high evaluation success rate in simulation before considering taking a checkpoint and deploying it.
 
 
 ## 3: Real World Deployment
 
-Now you have a checkpoint you have trained and want to evaluate, you can run
+Now you have a checkpoint you have trained and want to evaluate, place a cube onto the table in front of the robot. We recommend using cubes around 2.5cm in size since that is the average size the robot is trained to pick up in simulation. Furthermore we strongly recommend to be wary that you place the cube in a location that the robot was trained to pick from, which is dependent on your cube spawning randomization settings (if you aren't sure check the reset distribution video you generated in step 1).
+
+Then you run your model on the real robot with the following:
 
 ```bash
 python lerobot_sim2real/scripts/eval_ppo_rgb.py --env_id="SO100GraspCube-v1" --env-kwargs-json-path=env_config.json \
-    --checkpoint=path/to/ckpt.pt --no-continuous-eval
+    --checkpoint=path/to/ckpt.pt --no-continuous-eval --control-freq=15
 ```
 
-For safety reasons we recommend you run the script above with --no-continuous_eval first, which forces the robot to wait for you to press enter into the command line before it takes each action. Sometimes RL can learn very strange behaviors and in the real world this can lead to dangerous movements or the robot breaking. If you are okay with more risk and/or have checked that the robot is probably going to take normal actions you can remove the argument to allow the RL agent to run freely.
+For safety reasons we recommend you run the script above with --no-continuous_eval first, which forces the robot to wait for you to press enter into the command line before it takes each action. Sometimes RL can learn very strange behaviors and in the real world this can lead to dangerous movements or the robot breaking. If you are okay with more risk and/or have checked that the robot is probably going to take normal actions you can remove the argument to allow the RL agent to run freely. We further recommend for the SO100 hardware to stick to a control frequency of 15 which is a good balance of speed with accuracy/safety.
+
+Moreover you may want to check a few checkpoints that achieve high simulation evaluation success rate. Sometimes RL will learn something that does not generalize well to the real world, so some checkpoints might do better than others despite having the same performance in simulation. Grasping a cube is a fairly precise problem in many ways.
+
+If all things go well, you can now get a rather fast autonomous cube picking policy like below!
+
+<video preload="none" controls="True" width="49%" style="display: inline-block;" playsinline="true"><source src="https://github.com/StoneT2000/lerobot-sim2real/raw/refs/heads/main/docs/assets/tutorial_result_video.mp4" type="video/mp4"></video>
+
+
+## Frequently Asked Questions / Problems
+
+As people report some common questions/problems, ways to address them will be populated here!
+
+**RL is not learning in 25-40 million timesteps**: There are many reasons why RL can fail. For one the default reward function provided is very simple, it is effectively about 5 lines of code. Moreover the default training script was tuned to keep GPU memory usage on the lower end to ensure older GPUs can run training as well. One way to stabilize RL training further is to increase training batch-size and number of parallel environments. You can try double the number of environments first and see how it goes.
