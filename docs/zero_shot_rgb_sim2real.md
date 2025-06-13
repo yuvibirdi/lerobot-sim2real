@@ -122,8 +122,7 @@ Moreover you may want to check a few checkpoints that achieve high simulation ev
 
 If all things go well, you can now get a rather fast autonomous cube picking policy like below!
 
-<video preload="none" controls="True" width="49%" style="display: inline-block;" playsinline="true"><source src="https://github.com/StoneT2000/lerobot-sim2real/raw/refs/heads/main/docs/assets/tutorial_result_video.mp4" type="video/mp4"></video>
-
+https://github.com/user-attachments/assets/ca20d10e-d722-48fe-94af-f57e0b2b2fcd
 
 ## Frequently Asked Questions / Problems
 
