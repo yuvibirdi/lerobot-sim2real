@@ -15,11 +15,11 @@ If you find this project useful, give this repo and [ManiSkill](https://github.c
 
 This tutorial was written by [Xander Hinrichsen](https://www.linkedin.com/in/xander-hinrichsen/) and [Stone Tao](https://stoneztao.com/)
 
-Note that whenever you see some command line/script, in this codebase you can always add --help to get more information and options.
+Note that whenever you see some command line/script, in this codebase you can always add `--help` to get more information and options.
 
 ## 1: Setup your simulation and real world environment
 
-We provide a pre-built simulation environment that only need a few minor modifications for your own use. If you are interested in making your own environments to then tackle via sim2real reinforcement learning we recommend you finish this tutorial first then learn how to [create custom tasks in ManiSkill](https://maniskill.readthedocs.io/en/latest/user_guide/tutorials/custom_tasks/index.html) and the tutorial on how to [design them for sim2real support](https://maniskill.readthedocs.io/en/latest/user_guide/tutorials/custom_tasks/index.html)
+We provide a pre-built [simulation environment called SO100GraspCube-v1](https://github.com/haosulab/ManiSkill/tree/main/mani_skill/envs/tasks/digital_twins/so100_arm/grasp_cube.py) that only needs a few minor modifications for your own use. If you are interested in making your own environments to then tackle via sim2real reinforcement learning we recommend you finish this tutorial first, then learn how to [create custom simulated tasks in ManiSkill](https://maniskill.readthedocs.io/en/latest/user_guide/tutorials/custom_tasks/index.html), then follow the tutorial on how to [design them for sim2real support](https://maniskill.readthedocs.io/en/latest/user_guide/tutorials/custom_tasks/index.html)
 
 In this section we need to roughly align the real world and simulation environments. This means we need to decide where the robot is installed, and where the camera is relative to the robot. 
 
@@ -35,7 +35,7 @@ To make modifications you can just edit the "base_camera_settings"."pos" value i
 python lerobot_sim2real/scripts/record_reset_distribution.py --env-id="SO100GraspCube-v1" --env-kwargs-json-path=env_config.json
 ```
 
-TODO Show video of a reasonable reset distribution
+https://github.com/user-attachments/assets/905c2c5c-6cf4-43a9-8cb8-fa40748fffef
 
 You can also modify where the camera is pointing at in case it can't see the robot or enough of the workspace in simulation. Simply modify "base_camera_settings"."target" value accordingly, which is the 3D point the camera points at. Finally ou can also modify the mean position cubes are spawned at as well as how large of a square area they are randomized in in the config file.
 
