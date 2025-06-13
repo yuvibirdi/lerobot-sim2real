@@ -2,7 +2,7 @@
 
 LeRobot Sim2real provides code to train with Reinforcement Learning in fast GPU parallelized simulation and rendering via [ManiSkill](https://github.com/haosulab/ManiSkill) and deploy to the real-world. The codebase is designed for use with the [🤗 LeRobot](https://github.com/huggingface/lerobot) library, which handles all of the hardware interfacing code. Once you clone and follow the installation instructions you can try out the [zero-shot RGB sim2real tutorial](./docs/zero_shot_rgb_sim2real.md) to train in pure simulation something that can pick up cubes in the real world like below:
 
-<video preload="none" controls="True" width="49%" style="display: inline-block;" playsinline="true"><source src="https://github.com/StoneT2000/lerobot-sim2real/raw/refs/heads/main/docs/assets/tutorial_result_video.mp4" type="video/mp4"></video>
+https://github.com/user-attachments/assets/ca20d10e-d722-48fe-94af-f57e0b2b2fcd
 
 
 If you find this project useful, give this repo and [ManiSkill](https://github.com/haosulab/ManiSkill) a star! If you are using [SO100](https://github.com/TheRobotStudio/SO-ARM100/)/[LeRobot](https://github.com/huggingface/lerobot), make sure to also give them a star. If you use ManiSkill / this sim2real codebase in your research, please cite our [research paper](https://arxiv.org/abs/2410.00425):
