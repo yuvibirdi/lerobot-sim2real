@@ -51,6 +51,14 @@ The default options for the sim settings are tested and should work so you can a
 
 You might also notice that we often use `--env-id="SO100GraspCube-v1" --env-kwargs-json-path=env_config.json` in scripts. The codebase is built to support different environments and configurations so passing these tells those scripts which environment you want to work with and with what settings.
 
+Before we start setting up the real camera you might also want to check if your robot's colors match the simulation one. The default is all white, but you can modify the color by changing the "robot_color" part of the `env_config.json` file to either be "random" or a value like [0.1, 0.1, 0.1] for black colored robots.
+
+```json
+  "domain_randomization_config": {
+    "robot_color": "random"
+  }
+```
+
 ## 1.2: Roughly align the real world camera with the simulation camera
 
 Next we need to roughly align the real world camera to match the position and orientation of the simulation one. To do so first mount your robot on a surface/table somewhere and make sure to mark down exactly where it is placed. Be prepared to unmount the robot later as we will need to take a picture of the background after camera alignment without the robot in the scene.
