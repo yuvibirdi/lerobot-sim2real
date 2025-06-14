@@ -41,7 +41,7 @@ python lerobot_sim2real/scripts/record_reset_distribution.py --env-id="SO100Gras
 
 https://github.com/user-attachments/assets/905c2c5c-6cf4-43a9-8cb8-fa40748fffef
 
-You can also modify where the camera is pointing at in case it can't see the robot or enough of the workspace in simulation. Simply modify "base_camera_settings"."target" value accordingly, which is the 3D point the camera points at. Finally ou can also modify the mean position cubes are spawned at as well as how large of a square area they are randomized in in the config file.
+You can also modify where the camera is pointing at in case it can't see the robot or enough of the workspace in simulation. Simply modify "base_camera_settings"."target" value accordingly, which is the 3D point the camera points at. Finally you can also modify the mean position cubes are spawned at as well as how large of a square area they are randomized in in the config file.
 
 The default options for the sim settings are tested and should work so you can also skip modifying the simulation environment and go straight to setting up the real camera.
 
