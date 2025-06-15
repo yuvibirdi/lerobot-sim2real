@@ -105,7 +105,7 @@ Now we get to train the robot we setup in the real world in simulation via RL. W
 For the SO100GraspCube-v1 environment we have the following already tuned script (uses about 8-10GB of GPU memory)
 
 ```bash
-seed=42
+seed=3
 python lerobot_sim2real/scripts/train_ppo_rgb.py --env-id="SO100GraspCube-v1" --env-kwargs-json-path=env_config.json \
   --ppo.seed=${seed} \
   --ppo.num_envs=1024 --ppo.num-steps=16 --ppo.update_epochs=8 --ppo.num_minibatches=32 \
