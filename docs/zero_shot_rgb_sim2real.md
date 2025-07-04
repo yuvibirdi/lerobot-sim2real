@@ -74,7 +74,7 @@ python lerobot_sim2real/scripts/camera_alignment.py --env-id="SO100GraspCube-v1"
 Two examples are shown below, both of which after RL training worked out fine and produced working real world deployable models. Note that there are obvious errors here but that's fine! 
 
 > [!NOTE]
-> Based on testing from the community, alignment that looks worse than the ones here will struggle a lot more to work during sim2real transfer. We recommend using a camera stand with multiple degrees of freedom in different axes and using your hand to slowly move the camera around until it lines up well. This does take some practice but once you get the hang of it it becomes much easier to do. It is possible to permit even more calibration error but will require more advancced techniques and modifications to training that we leave as open research problems.
+> Based on testing from the community, alignment that looks worse than the ones here will struggle a lot more to work during sim2real transfer. We recommend using a camera stand with multiple degrees of freedom in different axes and using your hand to slowly move the camera around until it lines up well. This does take some practice but once you get the hang of it it becomes much easier to do. It is possible to permit even more calibration error but will require more advanced techniques and modifications to training that we leave as open research problems.
 
 ![](./assets/camera_alignment_step_1.2.png)
 
