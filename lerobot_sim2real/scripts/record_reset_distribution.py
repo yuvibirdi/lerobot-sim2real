@@ -5,6 +5,11 @@ from typing import Optional
 from mani_skill.utils.wrappers.record import RecordEpisode
 import tyro
 
+from lerobot_sim2real.envs.randomization_wrapper import (
+    LightingRandomizationWrapper,
+    DistractorObjectsWrapper,
+)
+
 
 @dataclass
 class Args:
@@ -30,7 +35,19 @@ def main(args: Args):
         with open(args.env_kwargs_json_path, "r") as f:
             env_kwargs.update(json.load(f))
 
-    env = gym.make(args.env_id, **env_kwargs)
+    # Filter out wrapper-specific kwargs that shouldn't be passed to gym.make()
+    wrapper_kwargs = ['lighting_randomization', 'distractor_objects']
+    gym_env_kwargs = {k: v for k, v in env_kwargs.items() if k not in wrapper_kwargs}
+
+    env = gym.make(args.env_id, **gym_env_kwargs)
+
+    # Apply domain randomization wrappers
+    if env_kwargs.get('lighting_randomization', {}).get('enabled', False):
+        env = LightingRandomizationWrapper(env, env_kwargs)
+
+    if env_kwargs.get('distractor_objects', {}).get('enabled', False):
+        env = DistractorObjectsWrapper(env, env_kwargs)
+
     if args.record_dir is not None:
         env = RecordEpisode(env, output_dir=args.record_dir, save_video=False, save_trajectory=False, video_fps=15)
     env.reset()

@@ -26,6 +26,12 @@ from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper, Flatten
 from mani_skill.utils.wrappers.record import RecordEpisode
 from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv
 
+# Domain randomization wrappers
+from lerobot_sim2real.envs.randomization_wrapper import (
+    LightingRandomizationWrapper,
+    DistractorObjectsWrapper,
+)
+
 @dataclass
 class PPOArgs:
     exp_name: Optional[str] = None
@@ -317,8 +323,12 @@ def train(args: PPOArgs):
         env_kwargs["control_mode"] = args.control_mode
     env_kwargs.update(args.env_kwargs)
 
-    eval_envs = gym.make(args.env_id, num_envs=args.num_eval_envs, reconfiguration_freq=args.eval_reconfiguration_freq, **env_kwargs)
-    envs = gym.make(args.env_id, num_envs=args.num_envs if not args.evaluate else 1, reconfiguration_freq=args.reconfiguration_freq, **env_kwargs)
+    # Filter out wrapper-specific kwargs that shouldn't be passed to gym.make()
+    wrapper_kwargs = ['lighting_randomization', 'distractor_objects']
+    gym_env_kwargs = {k: v for k, v in env_kwargs.items() if k not in wrapper_kwargs}
+
+    eval_envs = gym.make(args.env_id, num_envs=args.num_eval_envs, reconfiguration_freq=args.eval_reconfiguration_freq, **gym_env_kwargs)
+    envs = gym.make(args.env_id, num_envs=args.num_envs if not args.evaluate else 1, reconfiguration_freq=args.reconfiguration_freq, **gym_env_kwargs)
 
     # rgbd obs mode returns a dict of data, we flatten it so there is just a rgbd key and state key
     envs = FlattenRGBDObservationWrapper(envs, rgb=True, depth=False, state=args.include_state)
@@ -327,6 +337,16 @@ def train(args: PPOArgs):
     if isinstance(envs.action_space, gym.spaces.Dict):
         envs = FlattenActionSpaceWrapper(envs)
         eval_envs = FlattenActionSpaceWrapper(eval_envs)
+
+    # Apply domain randomization wrappers
+    if args.env_kwargs.get('lighting_randomization', {}).get('enabled', False):
+        envs = LightingRandomizationWrapper(envs, args.env_kwargs)
+        eval_envs = LightingRandomizationWrapper(eval_envs, args.env_kwargs)
+
+    if args.env_kwargs.get('distractor_objects', {}).get('enabled', False):
+        envs = DistractorObjectsWrapper(envs, args.env_kwargs)
+        eval_envs = DistractorObjectsWrapper(eval_envs, args.env_kwargs)
+
     if args.capture_video:
         eval_output_dir = f"runs/{run_name}/videos"
         if args.evaluate:
