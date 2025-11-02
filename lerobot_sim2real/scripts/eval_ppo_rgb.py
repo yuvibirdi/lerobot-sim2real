@@ -21,6 +21,10 @@ from mani_skill.utils.wrappers.record import RecordEpisode
 from tqdm import tqdm
 from mani_skill.utils.visualization import tile_images
 import matplotlib.pyplot as plt
+from lerobot_sim2real.envs.randomization_wrapper import (
+    LightingRandomizationWrapper,
+    DistractorObjectsWrapper,
+)
 @dataclass
 class Args:
     checkpoint: Optional[str] = None
@@ -82,16 +86,20 @@ def main(args: Args):
         render_mode="sensors", # only sensors mode is supported right now for real envs, basically rendering the direct visual observations fed to policy
         max_episode_steps=args.max_episode_steps, # give our robot more time to try and re-try the task
         domain_randomization=False,
+        lighting_randomization={'enabled': False},
+        distractor_objects={'enabled': False},
         reward_mode="none"
     )
 
     if args.env_kwargs_json_path is not None:
         with open(args.env_kwargs_json_path, "r") as f:
             env_kwargs.update(json.load(f))
+    wrapper_kwargs = ['lighting_randomization', 'distractor_objects']
+    gym_env_kwargs = {k: v for k, v in env_kwargs.items() if k not in wrapper_kwargs}
     
     sim_env = gym.make(
         args.env_id,
-        **env_kwargs
+        **gym_env_kwargs
     )
     # you can apply most wrappers freely to the sim_env and the real_env will use them as well
     sim_env = FlattenRGBDObservationWrapper(sim_env)
