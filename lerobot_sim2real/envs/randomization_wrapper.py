@@ -34,26 +34,33 @@ class LightingRandomizationWrapper(gym.Wrapper):
             self._patch_load_lighting()
 
     def _patch_load_lighting(self):
-        """Replace environment's _load_lighting to use random light directions"""
+        """Replace environment's _load_lighting to use random light directions per-environment"""
         original_load_lighting = self.unwrapped._load_lighting
 
         def randomized_load_lighting(options: dict):
-            # Set constant ambient light (don't randomize)
-            self.unwrapped.scene.set_ambient_light([0.3, 0.3, 0.3])
+            # Iterate over all sub-scenes (parallel environments) and set different lighting for each
+            for sub_scene in self.unwrapped.scene.sub_scenes:
+                # Set ambient light (can randomize this per the config if needed)
+                if self.config.get('randomize_ambient', False):
+                    ambient_intensity = np.random.uniform(self.ambient_range[0], self.ambient_range[1])
+                    sub_scene.ambient_light = [ambient_intensity, ambient_intensity, ambient_intensity]
+                else:
+                    sub_scene.ambient_light = [0.3, 0.3, 0.3]
 
-            # Add ONE directional light with RANDOM direction and shadows
-            direction = np.random.uniform([-1, -1, -1], [1, 1, -0.5])
-            direction = direction / np.linalg.norm(direction)
+                # Add directional light(s) with RANDOM direction and shadows for each environment
+                for _ in range(self.num_lights):
+                    direction = np.random.uniform([-1, -1, -1], [1, 1, -0.5])
+                    direction = direction / np.linalg.norm(direction)
 
-            self.unwrapped.scene.add_directional_light(
-                direction,
-                self.directional_color,
-                shadow=self.shadow_enabled,
-                shadow_scale=10.0,
-                shadow_near=-10.0,
-                shadow_far=10.0,
-                shadow_map_size=self.shadow_map_size
-            )
+                    sub_scene.add_directional_light(
+                        direction,
+                        self.directional_color,
+                        shadow=self.shadow_enabled,
+                        shadow_scale=10.0,
+                        shadow_near=-10.0,
+                        shadow_far=10.0,
+                        shadow_map_size=self.shadow_map_size
+                    )
 
         # Replace the method
         self.unwrapped._load_lighting = randomized_load_lighting
@@ -94,9 +101,6 @@ class DistractorObjectsWrapper(gym.Wrapper):
             self.size_range = self.config.get('size_range', [0.015, 0.025])
             self.use_ycb = self.config.get('use_ycb', False)
 
-            self.distractors = []
-            self.distractor_count = 0  # For unique naming across resets
-
             # YCB model IDs (small objects)
             self.ycb_ids = [
                 "002_master_chef_can",
@@ -108,88 +112,65 @@ class DistractorObjectsWrapper(gym.Wrapper):
                 "010_potted_meat_can",
             ]
 
-    def _add_distractors(self):
-        """Spawn random distractor objects"""
-        if not self.enabled:
-            return
+            # Monkey-patch the environment's _load_scene to add distractors during reconfiguration
+            self._patch_load_scene()
 
-        scene = self.unwrapped.scene
-        num_distractors = np.random.randint(self.num_range[0], self.num_range[1] + 1)
+    def _patch_load_scene(self):
+        """Replace environment's _load_scene to add distractors during reconfiguration"""
+        original_load_scene = self.unwrapped._load_scene
 
-        # Track newly added distractors this reset
-        new_distractors = []
+        def randomized_load_scene(options: dict):
+            # First call the original _load_scene to load all the normal objects
+            original_load_scene(options)
 
-        for i in range(num_distractors):
-            # Random position in circular spawn area, slightly elevated to avoid floor collision
-            angle = np.random.uniform(0, 2 * np.pi)
-            radius = np.random.uniform(0, self.spawn_area_radius)
-            x = self.spawn_area_center[0] + radius * np.cos(angle)
-            y = self.spawn_area_center[1] + radius * np.sin(angle)
-            z = self.spawn_area_center[2] + 0.05  # Elevate to avoid floor
+            # Now add distractor objects to each sub-scene
+            scene = self.unwrapped.scene
+            num_distractors = np.random.randint(self.num_range[0], self.num_range[1] + 1)
 
-            # Create actor builder
-            if self.use_ycb:
-                try:
-                    from mani_skill.utils.building import actors
-                    model_id = np.random.choice(self.ycb_ids)
-                    builder = actors.get_actor_builder(scene, id=f"ycb:{model_id}")
-                    # YCB objects have their own size, don't set initial pose rotation
-                    builder.initial_pose = sapien.Pose(p=[x, y, z])
-                except Exception as e:
-                    print(f"Failed to load YCB object: {e}, falling back to cube")
-                    # Fallback to simple cube
+            for i in range(num_distractors):
+                # Random position in circular spawn area, slightly elevated to avoid floor collision
+                angle = np.random.uniform(0, 2 * np.pi)
+                radius = np.random.uniform(0, self.spawn_area_radius)
+                x = self.spawn_area_center[0] + radius * np.cos(angle)
+                y = self.spawn_area_center[1] + radius * np.sin(angle)
+                z = self.spawn_area_center[2] + 0.05  # Elevate to avoid floor
+
+                # Create actor builder
+                if self.use_ycb:
+                    try:
+                        from mani_skill.utils.building import actors
+                        model_id = np.random.choice(self.ycb_ids)
+                        builder = actors.get_actor_builder(scene, id=f"ycb:{model_id}")
+                        builder.initial_pose = sapien.Pose(p=[x, y, z])
+                    except Exception as e:
+                        print(f"Failed to load YCB object: {e}, falling back to cube")
+                        # Fallback to simple cube
+                        builder = scene.create_actor_builder()
+                        size = 0.02
+                        builder.add_box_collision(half_size=[size, size, size])
+                        builder.add_box_visual(half_size=[size, size, size], material=[0.8, 0.2, 0.2, 1.0])
+                        builder.initial_pose = sapien.Pose(p=[x, y, z])
+                else:
+                    # Simple colored cube
                     builder = scene.create_actor_builder()
-                    size = 0.02
+                    size = np.random.uniform(self.size_range[0], self.size_range[1])
                     builder.add_box_collision(half_size=[size, size, size])
-                    builder.add_box_visual(half_size=[size, size, size], material=[0.8, 0.2, 0.2, 1.0])
+                    builder.add_box_visual(
+                        half_size=[size, size, size],
+                        material=np.random.uniform(0, 1, 4)
+                    )
                     builder.initial_pose = sapien.Pose(p=[x, y, z])
-            else:
-                # Simple colored cube - not recommended, use YCB instead
-                builder = scene.create_actor_builder()
-                size = np.random.uniform(self.size_range[0], self.size_range[1])
-                builder.add_box_collision(half_size=[size, size, size])
-                builder.add_box_visual(
-                    half_size=[size, size, size],
-                    material=np.random.uniform(0, 1, 4)
-                )
-                builder.initial_pose = sapien.Pose(p=[x, y, z])
 
-            # Build and track (use counter for unique names across resets)
-            distractor = builder.build(name=f"distractor_{self.distractor_count}")
-            new_distractors.append(distractor)
-            self.distractor_count += 1
+                # Build the distractor
+                distractor = builder.build(name=f"distractor_{i}")
 
-        # Replace old distractors list with new ones
-        self.distractors = new_distractors
-
-    def _remove_distractors(self):
-        """Remove all distractor objects by moving them far away"""
-        if not self.enabled or len(self.distractors) == 0:
-            return
-
-        # Move distractors far away from scene (GPU sim doesn't support remove_actor)
-        for distractor in self.distractors:
-            try:
-                # Move far away and disable
-                distractor.set_pose(sapien.Pose(p=[1000, 1000, 1000]))
-            except Exception as e:
-                # If that fails, try to hide it
-                try:
-                    # Some actors might have different APIs
-                    if hasattr(distractor, 'hide'):
-                        distractor.hide()
-                except Exception:
-                    pass
-
-        # Don't clear the list - keep references so names stay unique
-        # But mark them as "removed" so we know they're not active
+        # Replace the method
+        self.unwrapped._load_scene = randomized_load_scene
 
     def reset(self, **kwargs):
-        self._remove_distractors()
-        obs, info = super().reset(**kwargs)
-        self._add_distractors()
-        return obs, info
+        # Force reconfiguration on every reset to get new distractor positions/counts
+        if self.enabled and self.unwrapped.reconfiguration_freq != 1:
+            self.unwrapped.reconfiguration_freq = 1
 
-    def close(self):
-        self._remove_distractors()
-        super().close()
+        obs, info = super().reset(**kwargs)
+        return obs, info

@@ -338,14 +338,13 @@ def train(args: PPOArgs):
         envs = FlattenActionSpaceWrapper(envs)
         eval_envs = FlattenActionSpaceWrapper(eval_envs)
 
-    # Apply domain randomization wrappers (only to training envs, not eval)
     if args.env_kwargs.get('lighting_randomization', {}).get('enabled', False):
         envs = LightingRandomizationWrapper(envs, args.env_kwargs)
-        # eval_envs = LightingRandomizationWrapper(eval_envs, args.env_kwargs)  # Disabled: causes scene modification error with batched rendering
+        eval_envs = LightingRandomizationWrapper(eval_envs, args.env_kwargs)
 
     if args.env_kwargs.get('distractor_objects', {}).get('enabled', False):
         envs = DistractorObjectsWrapper(envs, args.env_kwargs)
-        # eval_envs = DistractorObjectsWrapper(eval_envs, args.env_kwargs)  # Disabled: causes scene modification error with batched rendering
+        eval_envs = DistractorObjectsWrapper(eval_envs, args.env_kwargs)
 
     if args.capture_video:
         eval_output_dir = f"runs/{run_name}/videos"
