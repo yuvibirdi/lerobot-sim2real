@@ -16,7 +16,7 @@
     "directional_color": [1.0, 1.0, 1.0],
     "num_lights": 1,
     "shadow_enabled": true,
-    "shadow_map_size": 4096
+    "shadow_map_size": 512, 
   },
   "distractor_objects": {
     "enabled": true,
