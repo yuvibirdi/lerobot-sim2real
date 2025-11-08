@@ -4,7 +4,7 @@
       "fov": 1.20396,
       "target": [0.15, -0.015, 0.07]
   },
-  "greenscreen_overlay_path": null,
+  "greenscreen_overlay_path": "greenscreen.png",
   "spawn_box_pos": [0.3, 0.05],
   "spawn_box_half_size": 0.1,
   "domain_randomization_config": {
