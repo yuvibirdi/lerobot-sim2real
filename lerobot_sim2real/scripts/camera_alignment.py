@@ -129,12 +129,17 @@ def main(args: Args):
         obs_mode="rgb+segmentation",
         render_mode="sensors",
         reward_mode="none",
+        lighting_randomization={'enabled': False},
+        distractor_objects={'enabled': False},
         # use larger camera resolution to make it easier to align. In training we won't use this however
         sensor_configs=dict(width=512, height=512)
     )
     if args.env_kwargs_json_path is not None:
         with open(args.env_kwargs_json_path, "r") as f:
             env_kwargs.update(json.load(f))
+    wrapper_kwargs = ['lighting_randomization', 'distractor_objects']
+    env_kwargs = {k: v for k, v in env_kwargs.items() if k not in wrapper_kwargs}
+            
     sim_env = gym.make(
         args.env_id,
         **env_kwargs,

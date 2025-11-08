@@ -1,10 +1,10 @@
 {
   "base_camera_settings": {
-      "pos": [0.4050, 0.2740, 0.2883],
-      "fov": 1.4108060,
-      "target": [0.173, -0.15, 0.06]
+      "pos": [0.4297, 0.3716, 0.3047],
+      "fov": 1.20396,
+      "target": [0.15, -0.015, 0.07]
   },
-  "greenscreen_overlay_path": "./greenscreen.png",
+  "greenscreen_overlay_path": null,
   "spawn_box_pos": [0.3, 0.05],
   "spawn_box_half_size": 0.1,
   "domain_randomization_config": {
@@ -16,7 +16,7 @@
     "directional_color": [1.0, 1.0, 1.0],
     "num_lights": 1,
     "shadow_enabled": true,
-    "shadow_map_size": 512, 
+    "shadow_map_size": 512
   },
   "distractor_objects": {
     "enabled": true,
