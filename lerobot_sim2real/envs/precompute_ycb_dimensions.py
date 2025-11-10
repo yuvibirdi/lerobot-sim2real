@@ -6,7 +6,7 @@ os.environ["MS_ASSET_DIR"] = "./assets/"
 from mani_skill.utils import download_asset, assets
 
 
-def filter_ycb_objects_by_dimension(
+def filter_ycb_objects_by_dimensions(
     max_x: Optional[float] = None,
     max_y: Optional[float] = None,
     max_z: Optional[float] = None,
@@ -44,5 +44,5 @@ def filter_ycb_objects_by_dimension(
 
 if __name__ == "__main__":
     print("example usage:\n")
-    filtered_ycb_ids = filter_ycb_objects_by_dimension(max_x=0.1, max_y=0.1, max_z=0.1)
+    filtered_ycb_ids = filter_ycb_objects_by_dimensions(max_x=0.1, max_y=0.1, max_z=0.1)
     print("Filtered YCB Object IDs:", filtered_ycb_ids)

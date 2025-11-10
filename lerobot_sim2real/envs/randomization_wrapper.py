@@ -3,7 +3,7 @@
 import numpy as np
 import gymnasium as gym
 import sapien
-
+from precompute_ycb_dimensions import filter_ycb_objects_by_dimensions
 
 class LightingRandomizationWrapper(gym.Wrapper):
     """Randomizes lighting with shadows on each reset.
@@ -102,16 +102,7 @@ class DistractorObjectsWrapper(gym.Wrapper):
             self.use_ycb = self.config.get('use_ycb', False)
 
             # YCB model IDs (small objects)
-            self.ycb_ids = [
-                "002_master_chef_can",
-                "003_cracker_box",
-                "004_sugar_box",
-                "005_tomato_soup_can",
-                "006_mustard_bottle",
-                "009_gelatin_box",
-                "010_potted_meat_can",
-            ]
-
+            self.ycb_ids = filter_ycb_objects_by_dimensions(max_z=0.1)
             # Monkey-patch the environment's _load_scene to add distractors during reconfiguration
             self._patch_load_scene()
 
