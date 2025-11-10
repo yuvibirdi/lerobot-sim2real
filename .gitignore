@@ -12,6 +12,7 @@ lerobot/
 videos/
 .vscode/
 .DS_Store
+assets/
 
 
 wandb/
