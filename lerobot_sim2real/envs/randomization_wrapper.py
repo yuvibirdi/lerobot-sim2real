@@ -107,7 +107,6 @@ class DistractorObjectsWrapper(gym.Wrapper):
                 max_y = self.config.get('max_dimension', {}).get('y', None),
                 max_z = self.config.get('max_dimension', {}).get('z', None)
             )
-            self.ycb_ids = ["007_rubiks_cube", "011_banana"]
             # Monkey-patch the environment's _load_scene to add distractors during reconfiguration
             self._patch_load_scene()
 
