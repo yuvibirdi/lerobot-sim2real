@@ -2,7 +2,8 @@ import os
 import json
 import numpy as np
 from typing import Optional, List
-os.environ["MS_ASSET_DIR"] = "./assets/"
+from pathlib import Path
+
 from mani_skill.utils import download_asset, assets
 
 
@@ -12,11 +13,13 @@ def filter_ycb_objects_by_dimensions(
     max_z: Optional[float] = None,
     download_if_missing: bool = True
 ) -> List[str]:
-    ycb_info_path = "./assets/data/assets/mani_skill2_ycb/info_pick_v0.json" 
-   
+    asset_dir = Path(assets.DATA_SOURCES["ycb"].output_dir)
+    ycb_info_path = asset_dir / "assets/mani_skill2_ycb/info_pick_v0.json" 
     if not os.path.exists(ycb_info_path) and download_if_missing:
        print("YCB info file not found. Downloading YCB assets...")
        download_asset.download(data_source=assets.DATA_SOURCES["ycb"], non_interactive=True)
+       download_path = assets.DATA_SOURCES["ycb"].output_dir
+       print("Assets downloaded to:", download_path)
        print("Download complete")
     if not os.path.exists(ycb_info_path):
         raise FileNotFoundError(f"YCB info file not found at {ycb_info_path}") 
@@ -44,5 +47,5 @@ def filter_ycb_objects_by_dimensions(
 
 if __name__ == "__main__":
     print("example usage:\n")
-    filtered_ycb_ids = filter_ycb_objects_by_dimensions(max_x=0.1, max_y=0.1, max_z=0.1)
+    filtered_ycb_ids = filter_ycb_objects_by_dimensions()
     print("Filtered YCB Object IDs:", filtered_ycb_ids)

@@ -24,6 +24,11 @@
     "spawn_area_center": [0.20, -0.05, 0.02],
     "spawn_area_radius": 0.10,
     "size_range": [0.015, 0.025],
-    "use_ycb": true
+    "use_ycb": true,
+    "max_dimension": {
+      "x": 0.1,
+      "y": 0.1,
+      "z": 0.2 
+    }
   }
 }
