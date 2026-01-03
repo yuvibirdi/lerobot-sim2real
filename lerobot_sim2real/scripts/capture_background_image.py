@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import tyro
 from dataclasses import dataclass
+from pathlib import Path
 
 @dataclass
 class Args:
@@ -21,7 +22,26 @@ class Args:
 
 def main(args: Args):
     real_robot = create_real_robot(uid="so100")
-    real_robot.connect()
+    
+    # Check for existing motor calibration
+    calibration_path = Path.home() / ".cache/huggingface/lerobot/calibration/robots/so100_follower/stone_home.json"
+    run_calibration = True
+    if calibration_path.exists():
+        print(f"\nExisting motor calibration found: {calibration_path}")
+        response = input("Use existing calibration? [Y/n]: ").strip().lower()
+        if response in ("", "y", "yes"):
+            run_calibration = False
+            print("Using existing calibration.")
+        else:
+            print("Will run new calibration...")
+    
+    real_robot.connect(calibrate=run_calibration)
+    
+    # If using existing calibration, write it to the motor hardware
+    if not run_calibration and real_robot.calibration:
+        real_robot.bus.write_calibration(real_robot.calibration)
+        print("Calibration written to motor hardware.")
+    
     # we don't need to move the robot. We only want to take a picture
     real_robot.bus.disable_torque()
     real_agent = LeRobotRealAgent(real_robot)

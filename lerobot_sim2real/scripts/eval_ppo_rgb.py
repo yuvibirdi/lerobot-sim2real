@@ -77,9 +77,28 @@ def main(args: Args):
 
     ### Create and connect the real robot, wrap it to make it interfaceable with ManiSkill sim2real environments ###    
     real_robot = create_real_robot(uid="so100")
-    real_robot.connect()
+    
+    # Check for existing motor calibration
+    from pathlib import Path
+    calibration_path = Path.home() / ".cache/huggingface/lerobot/calibration/robots/so100_follower/stone_home.json"
+    run_calibration = True
+    if calibration_path.exists():
+        print(f"\nExisting motor calibration found: {calibration_path}")
+        response = input("Use existing calibration? [Y/n]: ").strip().lower()
+        if response in ("", "y", "yes"):
+            run_calibration = False
+            print("Using existing calibration.")
+        else:
+            print("Will run new calibration...")
+    
+    real_robot.connect(calibrate=run_calibration)
+    
+    # If using existing calibration, write it to the motor hardware
+    if not run_calibration and real_robot.calibration:
+        real_robot.bus.write_calibration(real_robot.calibration)
+        print("Calibration written to motor hardware.")
+    
     real_agent = LeRobotRealAgent(real_robot)
-
     ### Setup the sim environment to make various checks for sim2real alignment and debugging possible ###
     env_kwargs = dict(
         obs_mode="rgb+segmentation",
