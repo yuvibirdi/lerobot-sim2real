@@ -15,7 +15,7 @@ def create_real_robot(uid: str = "so100") -> Robot:
             use_degrees=True,
             # for phone camera users you can use the commented out setting below
             cameras={
-                "base_camera": OpenCVCameraConfig(index_or_path=0, fps=30, width=640, height=480)
+                "base_camera": OpenCVCameraConfig(index_or_path=2, fps=30, width=1280, height=720)
             },
             # for intel realsense camera users you need to modify the serial number or name for your own hardware
             # cameras={

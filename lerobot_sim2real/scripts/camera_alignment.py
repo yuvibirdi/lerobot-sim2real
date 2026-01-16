@@ -124,13 +124,13 @@ def update_camera(sim_env):
         fov_offset = 0.0
 
     # Camera movement mapping based on active keys
-    if "w" in active_keys:
-        camera_offset[0] -= MOVEMENT_SPEED * delta_time  # Move forward
     if "s" in active_keys:
+        camera_offset[0] -= MOVEMENT_SPEED * delta_time  # Move forward
+    if "w" in active_keys:
         camera_offset[0] += MOVEMENT_SPEED * delta_time  # Move back
-    if "d" in active_keys:
-        camera_offset[1] += MOVEMENT_SPEED * delta_time  # Move right
     if "a" in active_keys:
+        camera_offset[1] += MOVEMENT_SPEED * delta_time  # Move right
+    if "d" in active_keys:
         camera_offset[1] -= MOVEMENT_SPEED * delta_time  # Move left
     if "up" in active_keys:
         camera_offset[2] += MOVEMENT_SPEED * delta_time  # Move up
