@@ -239,6 +239,14 @@ def quaternion_to_table_intersection_target(
     return np.array([float(fallback_xy[0]), float(fallback_xy[1]), float(table_z)], dtype=np.float32)
 
 
+def _to_numpy(val, dtype=np.float32):
+    """Convert value to numpy array, handling torch tensors (CPU or CUDA)."""
+    if hasattr(val, 'cpu'):
+        # It's a torch tensor - move to CPU first
+        val = val.cpu().numpy()
+    return np.array(val, dtype=dtype).flatten()
+
+
 def patch_camera_pose_from_quaternion(sim_env):
     """
     Monkey-patch the environment's sample_camera_poses to use quaternion from config.
@@ -261,8 +269,9 @@ def patch_camera_pose_from_quaternion(sim_env):
     if "quaternion" not in env.base_camera_settings:
         return False
     
-    quaternion_wxyz = np.array(env.base_camera_settings["quaternion"], dtype=np.float32)
-    pos = np.array(env.base_camera_settings["pos"], dtype=np.float32)
+    # Handle both numpy arrays and torch tensors (including CUDA tensors)
+    quaternion_wxyz = _to_numpy(env.base_camera_settings["quaternion"])
+    pos = _to_numpy(env.base_camera_settings["pos"])
     
     # Validate
     if quaternion_wxyz.shape != (4,):
