@@ -9,6 +9,7 @@ from lerobot_sim2real.envs.randomization_wrapper import (
     LightingRandomizationWrapper,
     DistractorObjectsWrapper,
 )
+from lerobot_sim2real.utils.camera_calibration import patch_camera_pose_from_quaternion
 
 
 @dataclass
@@ -40,6 +41,7 @@ def main(args: Args):
     gym_env_kwargs = {k: v for k, v in env_kwargs.items() if k not in wrapper_kwargs}
 
     env = gym.make(args.env_id, **gym_env_kwargs)
+    patch_camera_pose_from_quaternion(env)  # Apply quaternion from config if present
 
     # Apply domain randomization wrappers
     if env_kwargs.get('lighting_randomization', {}).get('enabled', False):

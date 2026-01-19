@@ -1,0 +1,3 @@
+[submodule "simple-easyhec"]
+	path = simple-easyhec
+	url = git@github.com:yuvibirdi/simple-easyhec

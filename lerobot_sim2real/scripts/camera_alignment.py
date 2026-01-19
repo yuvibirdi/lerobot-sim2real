@@ -6,9 +6,16 @@ from typing import Optional
 import gymnasium as gym
 import sapien
 from lerobot_sim2real.utils.safety import setup_safe_exit
-from lerobot_sim2real.utils.camera_calibration import load_calibrated_pose, load_intrinsics, apply_intrinsics_to_camera
+from lerobot_sim2real.utils.camera_calibration import (
+    load_calibrated_pose,
+    load_intrinsics,
+    apply_intrinsics_to_camera,
+    quaternion_to_table_intersection_target,
+    patch_camera_pose_from_quaternion,
+)
 from mani_skill.utils.wrappers.flatten import FlattenRGBDObservationWrapper
-from lerobot_sim2real.config.real_robot import create_real_robot
+from lerobot_sim2real.config.real_robot import create_real_robot, create_macos_stereo_camera
+from lerobot_sim2real.utils.platform import is_macos
 from mani_skill.agents.robots.lerobot.manipulator import LeRobotRealAgent
 from mani_skill.envs.sim2real_env import Sim2RealEnv
 import cv2
@@ -185,8 +192,26 @@ def update_camera(sim_env):
         pose = sapien.Pose(p=new_pos, q=new_q)
     else:
         # Fall back to look_at behavior with config settings
-        pos = sim_env.unwrapped.base_camera_settings["pos"] + camera_offset
-        pose = sapien_utils.look_at(pos, sim_env.unwrapped.base_camera_settings["target"])
+        pos = np.array(sim_env.unwrapped.base_camera_settings["pos"], dtype=np.float32) + camera_offset
+        # Get base pose from look_at
+        base_pose = sapien_utils.look_at(pos, sim_env.unwrapped.base_camera_settings["target"])
+        
+        # Apply rotation offset if any
+        if np.any(rotation_offset != 0):
+            base_q = np.array(base_pose.q).flatten()
+            # Convert base quaternion (wxyz) to scipy format (xyzw)
+            base_quat_xyzw = np.array([base_q[1], base_q[2], base_q[3], base_q[0]])
+            base_rot = Rotation.from_quat(base_quat_xyzw)
+            # Create offset rotation from euler angles (roll, pitch, yaw)
+            offset_rot = Rotation.from_euler('xyz', rotation_offset)
+            # Combine rotations: base * offset (local adjustment)
+            combined_rot = base_rot * offset_rot
+            # Convert back to wxyz format
+            combined_quat_xyzw = combined_rot.as_quat()
+            new_q = np.array([combined_quat_xyzw[3], combined_quat_xyzw[0], combined_quat_xyzw[1], combined_quat_xyzw[2]], dtype=np.float32)
+            pose = sapien.Pose(p=np.array(base_pose.p).flatten().astype(np.float32), q=new_q)
+        else:
+            pose = base_pose
     
     sim_env.unwrapped.camera_mount.set_pose(pose)
     sim_env.unwrapped._sensors["base_camera"].camera.set_fovy(
@@ -194,13 +219,31 @@ def update_camera(sim_env):
     )
 
     if len(active_keys) > 0:
-        print("current_camera_position", pose.p)
-        print("current_camera_quaternion", pose.q)
-        print("rotation_offset (roll, pitch, yaw):", rotation_offset)
-        print(
-            "current_camera_fov",
-            sim_env.unwrapped.base_camera_settings["fov"] + fov_offset,
+        # Calculate actual position and quaternion
+        actual_pos = np.array(pose.p).flatten()
+        actual_q = np.array(pose.q).flatten()
+        actual_fov = sim_env.unwrapped.base_camera_settings["fov"] + fov_offset
+        
+        # Calculate target using table intersection (for backwards compatibility)
+        target = quaternion_to_table_intersection_target(
+            actual_pos,
+            actual_q,
+            table_z=0.0,
+            fallback_xy=(0.0, 0.0),
         )
+        
+        print("\n" + "=" * 70)
+        print(f"Position:   {actual_pos.tolist()}")
+        print(f"Quaternion: {actual_q.tolist()}  (wxyz)")
+        print(f"Target:     {target.tolist()}  (for look_at fallback)")
+        print(f"FOV:        {actual_fov}")
+        print("=" * 70)
+        print("COPY TO env_config.json base_camera_settings:")
+        print(f'"pos": {actual_pos.tolist()},')
+        print(f'"fov": {actual_fov},')
+        print(f'"target": {target.tolist()},')
+        print(f'"quaternion": {actual_q.tolist()}')
+        print("=" * 70 + "\n")
         help_message_printed = False  # Reset the flag when there's movement
     elif (
         not help_message_printed
@@ -218,9 +261,9 @@ rotation_offset = np.zeros(3, dtype=np.float32)  # roll, pitch, yaw in radians
 fov_offset = 0.0
 active_keys = set()
 last_frame_time = time.time()
-MOVEMENT_SPEED = 0.1  # units per second
-ROTATION_SPEED = 0.3  # radians per second
-FOV_CHANGE_SPEED = 0.1  # radians per second
+MOVEMENT_SPEED = 0.01  # units per second (reduced for granular control)
+ROTATION_SPEED = 0.03  # radians per second (reduced for granular control)
+FOV_CHANGE_SPEED = 0.01  # radians per second (reduced for granular control)
 help_message_printed = False  # Flag to track if we've printed the help message
 calibrated_base_pose = None  # Will be set if extrinsics path is provided
 
@@ -236,6 +279,12 @@ def on_key_release(event):
 
 def main(args: Args):
     real_robot = create_real_robot(uid="so100")
+    
+    # On macOS, inject our custom stereo camera before connecting
+    if is_macos():
+        macos_camera = create_macos_stereo_camera(index=0, stereo_side="left", fps=30)
+        real_robot.cameras["base_camera"] = macos_camera
+        print("Injected MacOSStereoCamera for base_camera")
     
     # Check for existing motor calibration
     calibration_path = Path.home() / ".cache/huggingface/lerobot/calibration/robots/so100_follower/stone_home.json"
@@ -288,7 +337,15 @@ def main(args: Args):
     global calibrated_base_pose
     extrinsics_path = None
     
-    if args.extrinsics_path is not None:
+    # First, check if quaternion is in config (from env_kwargs_json_path)
+    # This takes priority over extrinsics files since it's the final aligned result
+    if patch_camera_pose_from_quaternion(sim_env):
+        # Quaternion was in config and applied - set calibrated_base_pose for update_camera()
+        q = np.array(sim_env.unwrapped.base_camera_settings["quaternion"], dtype=np.float32)
+        p = np.array(sim_env.unwrapped.base_camera_settings["pos"], dtype=np.float32)
+        calibrated_base_pose = sapien.Pose(p=p, q=q)
+        print("Using quaternion from config (preserves roll).")
+    elif args.extrinsics_path is not None:
         # Explicit path provided via CLI
         extrinsics_path = Path(args.extrinsics_path)
     elif args.use_existing_calibration:
@@ -335,10 +392,13 @@ def main(args: Args):
 
     print("Camera alignment: Move real camera to align with the sim camera, close figure to exit")
     while True:
+        # Update camera position FIRST based on active keys
+        update_camera(sim_env)
+        # Force sensor update after pose change
+        sim_env.unwrapped.scene.update_render()
+        # THEN get the overlay with the updated camera pose
         overlaid_imgs = overlay_envs(sim_env, real_env)
         im.set_data(overlaid_imgs)
-        # Update camera position based on active keys
-        update_camera(sim_env)
         # Redraw the plot
         fig.canvas.draw()
         fig.show()

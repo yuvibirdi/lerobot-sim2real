@@ -1,9 +1,13 @@
 from typing import Optional
+import json
 import gymnasium as gym
 from mani_skill.utils.wrappers.flatten import FlattenRGBDObservationWrapper
-from lerobot_sim2real.config.real_robot import create_real_robot
+from lerobot_sim2real.config.real_robot import create_real_robot, create_macos_stereo_camera
 from mani_skill.agents.robots.lerobot.manipulator import LeRobotRealAgent
 from mani_skill.envs.sim2real_env import Sim2RealEnv
+from lerobot_sim2real.utils.camera_calibration import patch_camera_pose_from_quaternion
+from lerobot_sim2real.utils.platform import is_macos
+
 import cv2
 import numpy as np
 import tyro
@@ -22,7 +26,10 @@ class Args:
 
 def main(args: Args):
     real_robot = create_real_robot(uid="so100")
-    
+    if is_macos():
+        macos_camera = create_macos_stereo_camera(index=0, stereo_side="left", fps=30)
+        real_robot.cameras["base_camera"] = macos_camera
+        print("Injected MacOSStereoCamera for base_camera") 
     # Check for existing motor calibration
     calibration_path = Path.home() / ".cache/huggingface/lerobot/calibration/robots/so100_follower/stone_home.json"
     run_calibration = True
@@ -46,12 +53,20 @@ def main(args: Args):
     real_robot.bus.disable_torque()
     real_agent = LeRobotRealAgent(real_robot)
     
-    sim_env = gym.make(
-        args.env_id,
+    env_kwargs = dict(
         obs_mode="rgb+segmentation",
         render_mode="sensors",
         reward_mode="none"
     )
+    if args.env_kwargs_json_path is not None:
+        with open(args.env_kwargs_json_path, "r") as f:
+            env_kwargs.update(json.load(f))
+    # Filter out wrapper-specific kwargs
+    wrapper_kwargs = ['lighting_randomization', 'distractor_objects']
+    gym_env_kwargs = {k: v for k, v in env_kwargs.items() if k not in wrapper_kwargs}
+    
+    sim_env = gym.make(args.env_id, **gym_env_kwargs)
+    patch_camera_pose_from_quaternion(sim_env)  # Apply quaternion from config if present
     sim_env = FlattenRGBDObservationWrapper(sim_env)
     # we use our created simulation environment to determine how to process the real observations
     # e.g. if the sim env uses 128x128 images, the real_env will preprocess the real images down to 128x128 as well

@@ -25,6 +25,7 @@ from lerobot_sim2real.envs.randomization_wrapper import (
     LightingRandomizationWrapper,
     DistractorObjectsWrapper,
 )
+from lerobot_sim2real.utils.camera_calibration import patch_camera_pose_from_quaternion
 @dataclass
 class Args:
     checkpoint: Optional[str] = None
@@ -120,6 +121,7 @@ def main(args: Args):
         args.env_id,
         **gym_env_kwargs
     )
+    patch_camera_pose_from_quaternion(sim_env)  # Apply quaternion from config if present
     # you can apply most wrappers freely to the sim_env and the real_env will use them as well
     sim_env = FlattenRGBDObservationWrapper(sim_env)
     if args.record_dir is not None:

@@ -12,6 +12,7 @@ import json
 import gymnasium as gym
 import mani_skill.envs  # noqa
 from mani_skill.utils import sapien_utils
+from lerobot_sim2real.utils.camera_calibration import patch_camera_pose_from_quaternion
 import matplotlib.pyplot as plt
 
 from lerobot_sim2real.config.real_robot import create_real_robot
@@ -82,6 +83,7 @@ def main(args: Args):
         num_envs=1,
         **env_kwargs
     )
+    patch_camera_pose_from_quaternion(sim_env)  # Apply quaternion from config if present
     sim_env.reset()
     
     # Connect to real robot using proper wrapper

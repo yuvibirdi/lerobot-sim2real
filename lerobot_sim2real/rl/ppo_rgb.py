@@ -31,6 +31,7 @@ from lerobot_sim2real.envs.randomization_wrapper import (
     LightingRandomizationWrapper,
     DistractorObjectsWrapper,
 )
+from lerobot_sim2real.utils.camera_calibration import patch_camera_pose_from_quaternion
 
 @dataclass
 class PPOArgs:
@@ -329,6 +330,8 @@ def train(args: PPOArgs):
 
     eval_envs = gym.make(args.env_id, num_envs=args.num_eval_envs, reconfiguration_freq=args.eval_reconfiguration_freq, **gym_env_kwargs)
     envs = gym.make(args.env_id, num_envs=args.num_envs if not args.evaluate else 1, reconfiguration_freq=args.reconfiguration_freq, **gym_env_kwargs)
+    patch_camera_pose_from_quaternion(envs)  # Apply quaternion from config if present
+    patch_camera_pose_from_quaternion(eval_envs)
 
     # rgbd obs mode returns a dict of data, we flatten it so there is just a rgbd key and state key
     envs = FlattenRGBDObservationWrapper(envs, rgb=True, depth=False, state=args.include_state)
