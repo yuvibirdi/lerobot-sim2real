@@ -10,7 +10,7 @@ import gymnasium as gym
 import numpy as np
 import torch
 import tyro
-from lerobot_sim2real.config.real_robot import create_real_robot
+from lerobot_sim2real.config.real_robot import create_real_robot, create_macos_stereo_camera
 from lerobot_sim2real.rl.ppo_rgb import Agent
 
 from lerobot_sim2real.utils.safety import setup_safe_exit
@@ -26,6 +26,7 @@ from lerobot_sim2real.envs.randomization_wrapper import (
     DistractorObjectsWrapper,
 )
 from lerobot_sim2real.utils.camera_calibration import patch_camera_pose_from_quaternion
+from lerobot_sim2real.utils.platform import is_macos
 @dataclass
 class Args:
     checkpoint: Optional[str] = None
@@ -78,6 +79,12 @@ def main(args: Args):
 
     ### Create and connect the real robot, wrap it to make it interfaceable with ManiSkill sim2real environments ###    
     real_robot = create_real_robot(uid="so100")
+    
+    # On macOS, inject our custom stereo camera before connecting
+    if is_macos():
+        macos_camera = create_macos_stereo_camera(index=0, stereo_side="left", fps=30)
+        real_robot.cameras["base_camera"] = macos_camera
+        print("Injected MacOSStereoCamera for base_camera")
     
     # Check for existing motor calibration
     from pathlib import Path

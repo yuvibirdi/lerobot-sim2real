@@ -5,22 +5,22 @@
   "target": [0.6519101858139038, 0.05354991927742958, 0.0],
   "quaternion": [0.9513297080993652, -0.04475993290543556, 0.3043964207172394, 0.01764100044965744]
   },
-  "greenscreen_overlay_path": "greenscreen.png", 
-  "spawn_box_pos": [0.3, 0.05],
-  "spawn_box_half_size": 0.1,
+  "greenscreen_overlay_path": null, 
+  "spawn_box_pos": [0.3, 0.0],
+  "spawn_box_half_size": 0.14,
   "domain_randomization_config": {
     "robot_color": [0.1, 0.1, 0.1]
   },
   "lighting_randomization": {
     "enabled": true,
-    "ambient_range": [0.2, 0.6],
+    "ambient_range": [0.5, 1],
     "directional_color": [1.0, 1.0, 1.0],
     "num_lights": 1,
     "shadow_enabled": true,
-    "shadow_map_size": 512
+    "shadow_map_size": 512 
   },
   "distractor_objects": {
-    "enabled": true,
+    "enabled": false,
     "num_range": [1, 2],
     "spawn_area_center": [0.20, 0.00, 0.02],
     "spawn_area_radius": 0.10,
